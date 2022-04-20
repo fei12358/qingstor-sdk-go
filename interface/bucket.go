@@ -105,6 +105,10 @@ type bucket interface {
 	GetStatistics() (*service.GetBucketStatisticsOutput, error)
 	GetStatisticsWithContext(ctx context.Context) (*service.GetBucketStatisticsOutput, error)
 
+	// GetVersioning does Get Versioning information of the bucket.
+	GetVersioning() (*service.GetBucketVersioningOutput, error)
+	GetVersioningWithContext(ctx context.Context) (*service.GetBucketVersioningOutput, error)
+
 	// Head does Check whether the bucket exists and available.
 	Head() (*service.HeadBucketOutput, error)
 	HeadWithContext(ctx context.Context) (*service.HeadBucketOutput, error)
@@ -112,6 +116,10 @@ type bucket interface {
 	// ListMultipartUploads does List multipart uploads in the bucket.
 	ListMultipartUploads(input *service.ListMultipartUploadsInput) (*service.ListMultipartUploadsOutput, error)
 	ListMultipartUploadsWithContext(ctx context.Context, input *service.ListMultipartUploadsInput) (*service.ListMultipartUploadsOutput, error)
+
+	// ListObjectVersions does Retrieve metadata about all versions of the objects in a bucket.
+	ListObjectVersions(input *service.ListObjectVersionsInput) (*service.ListObjectVersionsOutput, error)
+	ListObjectVersionsWithContext(ctx context.Context, input *service.ListObjectVersionsInput) (*service.ListObjectVersionsOutput, error)
 
 	// ListObjects does Retrieve the object list in a bucket.
 	ListObjects(input *service.ListObjectsInput) (*service.ListObjectsOutput, error)
@@ -156,4 +164,8 @@ type bucket interface {
 	// PutReplication does Set Replication information of the bucket.
 	PutReplication(input *service.PutBucketReplicationInput) (*service.PutBucketReplicationOutput, error)
 	PutReplicationWithContext(ctx context.Context, input *service.PutBucketReplicationInput) (*service.PutBucketReplicationOutput, error)
+
+	// PutVersioning does Set Versioning information of the bucket.
+	PutVersioning(input *service.PutBucketVersioningInput) (*service.PutBucketVersioningOutput, error)
+	PutVersioningWithContext(ctx context.Context, input *service.PutBucketVersioningInput) (*service.PutBucketVersioningOutput, error)
 }

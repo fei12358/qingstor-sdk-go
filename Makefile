@@ -18,10 +18,10 @@ help:
 	@echo "  clean             to clean the coverage files"
 
 .PHONY: all
-all: check build test release
+all: update generate check test build
 
 .PHONY: check
-check: vet lint format
+check: vet format
 
 .PHONY: format
 format:
@@ -43,7 +43,7 @@ lint:
 
 .PHONY: update
 update:
-	git submodule update --remote
+	git submodule update --init --recursive
 	@echo "Done"
 
 .PHONY: generate

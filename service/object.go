@@ -360,17 +360,17 @@ type CompleteMultipartUploadOutput struct {
 
 // DeleteObject does Delete the object.
 // Documentation URL: https://docs.qingcloud.com/qingstor/api/object/delete.html
-func (s *Bucket) DeleteObject(objectKey string) (*DeleteObjectOutput, error) {
-	return s.DeleteObjectWithContext(context.Background(), objectKey)
+func (s *Bucket) DeleteObject(objectKey string, input *DeleteObjectInput) (*DeleteObjectOutput, error) {
+	return s.DeleteObjectWithContext(context.Background(), objectKey, input)
 }
 
 // DeleteObjectWithContext add context support for DeleteObject
-func (s *Bucket) DeleteObjectWithContext(ctx context.Context, objectKey string) (*DeleteObjectOutput, error) {
+func (s *Bucket) DeleteObjectWithContext(ctx context.Context, objectKey string, input *DeleteObjectInput) (*DeleteObjectOutput, error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
 
-	r, x, err := s.DeleteObjectRequest(objectKey)
+	r, x, err := s.DeleteObjectRequest(objectKey, input)
 
 	if err != nil {
 		return x, err
@@ -388,7 +388,11 @@ func (s *Bucket) DeleteObjectWithContext(ctx context.Context, objectKey string) 
 }
 
 // DeleteObjectRequest creates request and output object of DeleteObject.
-func (s *Bucket) DeleteObjectRequest(objectKey string) (*request.Request, *DeleteObjectOutput, error) {
+func (s *Bucket) DeleteObjectRequest(objectKey string, input *DeleteObjectInput) (*request.Request, *DeleteObjectOutput, error) {
+
+	if input == nil {
+		input = &DeleteObjectInput{}
+	}
 
 	properties := *s.Properties
 
@@ -406,7 +410,7 @@ func (s *Bucket) DeleteObjectRequest(objectKey string) (*request.Request, *Delet
 	}
 
 	x := &DeleteObjectOutput{}
-	r, err := request.New(o, nil, x)
+	r, err := request.New(o, input, x)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -414,11 +418,28 @@ func (s *Bucket) DeleteObjectRequest(objectKey string) (*request.Request, *Delet
 	return r, x, nil
 }
 
+// DeleteObjectInput presents input for DeleteObject.
+type DeleteObjectInput struct {
+	// Object version id
+	VersionID *string `json:"version_id,omitempty" name:"version_id" location:"query"`
+}
+
+// Validate validates the input for DeleteObject.
+func (v *DeleteObjectInput) Validate() error {
+
+	return nil
+}
+
 // DeleteObjectOutput presents output for DeleteObject.
 type DeleteObjectOutput struct {
 	StatusCode *int `location:"statusCode"`
 
 	RequestID *string `location:"requestID"`
+
+	// with version_id in query, this indicates if the version deleted is a delete-marker, without version_id, this indicates if the old-object you deleted is a delete-marker
+	XQSDeleteMarker *bool `json:"X-QS-Delete-Marker,omitempty" name:"X-QS-Delete-Marker" location:"headers"`
+	// version id of the new created delete-marker during this delete when bucket is versioned
+	XQSVersionId *string `json:"X-QS-Version-Id,omitempty" name:"X-QS-Version-Id" location:"headers"`
 }
 
 // GetObject does Retrieve the object.
@@ -498,6 +519,8 @@ type GetObjectInput struct {
 	ResponseContentType *string `json:"response-content-type,omitempty" name:"response-content-type" location:"query"`
 	// Specified the Expires response header
 	ResponseExpires *string `json:"response-expires,omitempty" name:"response-expires" location:"query"`
+	// Object version id
+	VersionID *string `json:"version_id,omitempty" name:"version_id" location:"query"`
 
 	// Check whether the ETag matches
 	IfMatch *string `json:"If-Match,omitempty" name:"If-Match" location:"headers"`
@@ -551,12 +574,16 @@ type GetObjectOutput struct {
 	// The Expires header contains the date/time after which the response is considered stale.
 	Expires      *string    `json:"Expires,omitempty" name:"Expires" location:"headers"`
 	LastModified *time.Time `json:"Last-Modified,omitempty" name:"Last-Modified" format:"RFC 822" location:"headers"`
+	// the object you get is a delete marker or not
+	XQSDeleteMarker *bool `json:"X-QS-Delete-Marker,omitempty" name:"X-QS-Delete-Marker" location:"headers"`
 	// Encryption algorithm of the object
 	XQSEncryptionCustomerAlgorithm *string `json:"X-QS-Encryption-Customer-Algorithm,omitempty" name:"X-QS-Encryption-Customer-Algorithm" location:"headers"`
 	// User-defined metadata
 	XQSMetaData *map[string]string `json:"X-QS-MetaData,omitempty" name:"X-QS-MetaData" location:"headers"`
 	// Storage class of the object
 	XQSStorageClass *string `json:"X-QS-Storage-Class,omitempty" name:"X-QS-Storage-Class" location:"headers"`
+	// version id of the object you get
+	XQSVersionId *string `json:"X-QS-Version-Id,omitempty" name:"X-QS-Version-Id" location:"headers"`
 }
 
 // Close will close the underlay body.
@@ -629,6 +656,9 @@ func (s *Bucket) HeadObjectRequest(objectKey string, input *HeadObjectInput) (*r
 
 // HeadObjectInput presents input for HeadObject.
 type HeadObjectInput struct {
+	// Object version id
+	VersionID *string `json:"version_id,omitempty" name:"version_id" location:"query"`
+
 	// Check whether the ETag matches
 	IfMatch *string `json:"If-Match,omitempty" name:"If-Match" location:"headers"`
 	// Check whether the object has been modified
@@ -657,13 +687,25 @@ type HeadObjectOutput struct {
 
 	RequestID *string `location:"requestID"`
 
+	// The Cache-Control general-header field is used to specify directives for caching mechanisms in both requests and responses.
+	CacheControl *string `json:"Cache-Control,omitempty" name:"Cache-Control" location:"headers"`
+	// In a multipart/form-data body, the HTTP Content-Disposition general header is a header that can be used on the subpart of a multipart body to give information about the field it applies to.
+	ContentDisposition *string `json:"Content-Disposition,omitempty" name:"Content-Disposition" location:"headers"`
+	// The Content-Encoding entity header is used to compress the media-type.
+	ContentEncoding *string `json:"Content-Encoding,omitempty" name:"Content-Encoding" location:"headers"`
+	// The Content-Language entity header is used to describe the language(s) intended for the audience.
+	ContentLanguage *string `json:"Content-Language,omitempty" name:"Content-Language" location:"headers"`
 	// Object content length
 	ContentLength *int64 `json:"Content-Length,omitempty" name:"Content-Length" location:"headers"`
 	// Object content type
 	ContentType *string `json:"Content-Type,omitempty" name:"Content-Type" location:"headers"`
 	// MD5sum of the object
-	ETag         *string    `json:"ETag,omitempty" name:"ETag" location:"headers"`
+	ETag *string `json:"ETag,omitempty" name:"ETag" location:"headers"`
+	// The Expires header contains the date/time after which the response is considered stale.
+	Expires      *string    `json:"Expires,omitempty" name:"Expires" location:"headers"`
 	LastModified *time.Time `json:"Last-Modified,omitempty" name:"Last-Modified" format:"RFC 822" location:"headers"`
+	// the object you head is a delete marker or not
+	XQSDeleteMarker *bool `json:"X-QS-Delete-Marker,omitempty" name:"X-QS-Delete-Marker" location:"headers"`
 	// Encryption algorithm of the object
 	XQSEncryptionCustomerAlgorithm *string `json:"X-QS-Encryption-Customer-Algorithm,omitempty" name:"X-QS-Encryption-Customer-Algorithm" location:"headers"`
 	// User-defined metadata
@@ -674,6 +716,8 @@ type HeadObjectOutput struct {
 	XQSObjectType *string `json:"X-QS-Object-Type,omitempty" name:"X-QS-Object-Type" location:"headers"`
 	// Storage class of the object
 	XQSStorageClass *string `json:"X-QS-Storage-Class,omitempty" name:"X-QS-Storage-Class" location:"headers"`
+	// version id of the object you head
+	XQSVersionId *string `json:"X-QS-Version-Id,omitempty" name:"X-QS-Version-Id" location:"headers"`
 }
 
 // ImageProcess does Image process with the action on the object
@@ -1304,6 +1348,8 @@ type PutObjectOutput struct {
 	ETag *string `json:"ETag,omitempty" name:"ETag" location:"headers"`
 	// Encryption algorithm of the object
 	XQSEncryptionCustomerAlgorithm *string `json:"X-QS-Encryption-Customer-Algorithm,omitempty" name:"X-QS-Encryption-Customer-Algorithm" location:"headers"`
+	// version id of the object you created
+	XQSVersionId *string `json:"X-QS-Version-Id,omitempty" name:"X-QS-Version-Id" location:"headers"`
 }
 
 // UploadMultipart does Upload object multipart.

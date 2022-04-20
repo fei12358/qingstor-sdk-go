@@ -38,8 +38,8 @@ type object interface {
 	CompleteMultipartUploadWithContext(ctx context.Context, objectKey string, input *service.CompleteMultipartUploadInput) (*service.CompleteMultipartUploadOutput, error)
 
 	// DeleteObject does Delete the object.
-	DeleteObject(objectKey string) (*service.DeleteObjectOutput, error)
-	DeleteObjectWithContext(ctx context.Context, objectKey string) (*service.DeleteObjectOutput, error)
+	DeleteObject(objectKey string, input *service.DeleteObjectInput) (*service.DeleteObjectOutput, error)
+	DeleteObjectWithContext(ctx context.Context, objectKey string, input *service.DeleteObjectInput) (*service.DeleteObjectOutput, error)
 
 	// GetObject does Retrieve the object.
 	GetObject(objectKey string, input *service.GetObjectInput) (*service.GetObjectOutput, error)

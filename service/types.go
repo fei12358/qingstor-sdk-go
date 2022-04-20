@@ -534,6 +534,61 @@ func (v *LoggingType) Validate() error {
 	return nil
 }
 
+// NoncurrentVersionExpirationType presents NoncurrentVersionExpiration.
+type NoncurrentVersionExpirationType struct {
+	// days
+	Days *int `json:"days,omitempty" name:"days"`
+}
+
+// Validate validates the NoncurrentVersionExpiration.
+func (v *NoncurrentVersionExpirationType) Validate() error {
+
+	return nil
+}
+
+// NoncurrentVersionTransitionType presents NoncurrentVersionTransition.
+type NoncurrentVersionTransitionType struct {
+	// days
+	Days *int `json:"days,omitempty" name:"days"`
+	// storage class
+	// StorageClass's available values: STANDARD_IA, STANDARD
+	StorageClass *string `json:"storage_class" name:"storage_class"` // Required
+
+}
+
+// Validate validates the NoncurrentVersionTransition.
+func (v *NoncurrentVersionTransitionType) Validate() error {
+
+	if v.StorageClass == nil {
+		return errors.ParameterRequiredError{
+			ParameterName: "StorageClass",
+			ParentName:    "NoncurrentVersionTransition",
+		}
+	}
+
+	if v.StorageClass != nil {
+		storageClassValidValues := []string{"STANDARD_IA", "STANDARD"}
+		storageClassParameterValue := fmt.Sprint(*v.StorageClass)
+
+		storageClassIsValid := false
+		for _, value := range storageClassValidValues {
+			if value == storageClassParameterValue {
+				storageClassIsValid = true
+			}
+		}
+
+		if !storageClassIsValid {
+			return errors.ParameterValueNotAllowedError{
+				ParameterName:  "StorageClass",
+				ParameterValue: storageClassParameterValue,
+				AllowedValues:  storageClassValidValues,
+			}
+		}
+	}
+
+	return nil
+}
+
 // NotIPAddressType presents NotIPAddress.
 type NotIPAddressType struct {
 	// Source IP
@@ -660,7 +715,9 @@ type RuleType struct {
 	Expiration                     *ExpirationType                     `json:"expiration,omitempty" name:"expiration"`
 	Filter                         *FilterType                         `json:"filter" name:"filter"` // Required
 	// rule id
-	ID *string `json:"id" name:"id"` // Required
+	ID                          *string                          `json:"id" name:"id"` // Required
+	NoncurrentVersionExpiration *NoncurrentVersionExpirationType `json:"noncurrent_version_expiration,omitempty" name:"noncurrent_version_expiration"`
+	NoncurrentVersionTransition *NoncurrentVersionTransitionType `json:"noncurrent_version_transition,omitempty" name:"noncurrent_version_transition"`
 	// rule status
 	// Status's available values: enabled, disabled
 	Status     *string         `json:"status" name:"status"` // Required
@@ -699,6 +756,18 @@ func (v *RuleType) Validate() error {
 		return errors.ParameterRequiredError{
 			ParameterName: "ID",
 			ParentName:    "Rule",
+		}
+	}
+
+	if v.NoncurrentVersionExpiration != nil {
+		if err := v.NoncurrentVersionExpiration.Validate(); err != nil {
+			return err
+		}
+	}
+
+	if v.NoncurrentVersionTransition != nil {
+		if err := v.NoncurrentVersionTransition.Validate(); err != nil {
+			return err
 		}
 	}
 
@@ -960,7 +1029,8 @@ type TransitionType struct {
 	// days
 	Days *int `json:"days,omitempty" name:"days"`
 	// storage class
-	StorageClass *int `json:"storage_class" name:"storage_class"` // Required
+	// StorageClass's available values: STANDARD_IA, STANDARD
+	StorageClass *string `json:"storage_class" name:"storage_class"` // Required
 
 }
 
@@ -971,6 +1041,26 @@ func (v *TransitionType) Validate() error {
 		return errors.ParameterRequiredError{
 			ParameterName: "StorageClass",
 			ParentName:    "Transition",
+		}
+	}
+
+	if v.StorageClass != nil {
+		storageClassValidValues := []string{"STANDARD_IA", "STANDARD"}
+		storageClassParameterValue := fmt.Sprint(*v.StorageClass)
+
+		storageClassIsValid := false
+		for _, value := range storageClassValidValues {
+			if value == storageClassParameterValue {
+				storageClassIsValid = true
+			}
+		}
+
+		if !storageClassIsValid {
+			return errors.ParameterValueNotAllowedError{
+				ParameterName:  "StorageClass",
+				ParameterValue: storageClassParameterValue,
+				AllowedValues:  storageClassValidValues,
+			}
 		}
 	}
 
@@ -989,6 +1079,71 @@ type UploadsType struct {
 
 // Validate validates the Uploads.
 func (v *UploadsType) Validate() error {
+
+	return nil
+}
+
+// VersionKeyType presents VersionKey.
+type VersionKeyType struct {
+	// Object created time
+	Created *time.Time `json:"created,omitempty" name:"created" format:"ISO 8601"`
+	// Whether this version is a delete marker
+	DeleteMarker *bool `json:"delete_marker,omitempty" name:"delete_marker"`
+	// Whether this key is encrypted
+	Encrypted *bool `json:"encrypted,omitempty" name:"encrypted"`
+	// MD5sum of the object
+	Etag *string `json:"etag,omitempty" name:"etag"`
+	// Whether this version is the latest object
+	IsLatest *bool `json:"is_latest,omitempty" name:"is_latest"`
+	// Object key
+	Key *string `json:"key,omitempty" name:"key"`
+	// MIME type of the object
+	MimeType *string `json:"mime_type,omitempty" name:"mime_type"`
+	// Last modified time
+	Modified *time.Time `json:"modified,omitempty" name:"modified" format:"ISO 8601"`
+	// Object content size
+	Size *int64 `json:"size,omitempty" name:"size"`
+	// Object storage class
+	StorageClass *string `json:"storage_class,omitempty" name:"storage_class"`
+	// version_id of the object
+	VersionID *string `json:"version_id,omitempty" name:"version_id"`
+}
+
+// Validate validates the VersionKey.
+func (v *VersionKeyType) Validate() error {
+
+	return nil
+}
+
+// VersioningType presents Versioning.
+type VersioningType struct {
+	// versioning status
+	// Status's available values: DISABLED, ENABLED, SUSPENDED
+	Status *string `json:"status,omitempty" name:"status"`
+}
+
+// Validate validates the Versioning.
+func (v *VersioningType) Validate() error {
+
+	if v.Status != nil {
+		statusValidValues := []string{"DISABLED", "ENABLED", "SUSPENDED"}
+		statusParameterValue := fmt.Sprint(*v.Status)
+
+		statusIsValid := false
+		for _, value := range statusValidValues {
+			if value == statusParameterValue {
+				statusIsValid = true
+			}
+		}
+
+		if !statusIsValid {
+			return errors.ParameterValueNotAllowedError{
+				ParameterName:  "Status",
+				ParameterValue: statusParameterValue,
+				AllowedValues:  statusValidValues,
+			}
+		}
+	}
 
 	return nil
 }

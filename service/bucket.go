@@ -1425,6 +1425,71 @@ type GetBucketStatisticsOutput struct {
 	URL *string `json:"url,omitempty" name:"url" location:"elements"`
 }
 
+// GetVersioning does Get Versioning information of the bucket.
+// Documentation URL: https://docs.qingcloud.com/qingstor/api/bucket/get_versioning.html
+func (s *Bucket) GetVersioning() (*GetBucketVersioningOutput, error) {
+	return s.GetVersioningWithContext(context.Background())
+}
+
+// GetVersioningWithContext add context support for GetVersioning
+func (s *Bucket) GetVersioningWithContext(ctx context.Context) (*GetBucketVersioningOutput, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	r, x, err := s.GetVersioningRequest()
+
+	if err != nil {
+		return x, err
+	}
+
+	err = r.SendWithContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
+	x.RequestID = &requestID
+
+	return x, err
+}
+
+// GetVersioningRequest creates request and output object of GetBucketVersioning.
+func (s *Bucket) GetVersioningRequest() (*request.Request, *GetBucketVersioningOutput, error) {
+
+	properties := *s.Properties
+
+	o := &data.Operation{
+		Config:        s.Config,
+		Properties:    &properties,
+		APIName:       "GET Bucket Versioning",
+		RequestMethod: "GET",
+		RequestURI:    "/<bucket-name>?versioning",
+		StatusCodes: []int{
+			200, // OK
+		},
+	}
+
+	x := &GetBucketVersioningOutput{}
+	r, err := request.New(o, nil, x)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return r, x, nil
+}
+
+// GetBucketVersioningOutput presents output for GetBucketVersioning.
+type GetBucketVersioningOutput struct {
+	StatusCode *int `location:"statusCode"`
+
+	RequestID *string `location:"requestID"`
+
+	// versioning status
+	// Status's available values: DISABLED, ENABLED, SUSPENDED
+	Status *string `json:"status,omitempty" name:"status" location:"elements"`
+}
+
 // Head does Check whether the bucket exists and available.
 // Documentation URL: https://docs.qingcloud.com/qingstor/api/bucket/head.html
 func (s *Bucket) Head() (*HeadBucketOutput, error) {
@@ -1590,6 +1655,116 @@ type ListMultipartUploadsOutput struct {
 	Prefix *string `json:"prefix,omitempty" name:"prefix" location:"elements"`
 	// Multipart uploads
 	Uploads []*UploadsType `json:"uploads,omitempty" name:"uploads" location:"elements"`
+}
+
+// ListObjectVersions does Retrieve metadata about all versions of the objects in a bucket.
+// Documentation URL: https://docs.qingcloud.com/qingstor/api/bucket/versions.html
+func (s *Bucket) ListObjectVersions(input *ListObjectVersionsInput) (*ListObjectVersionsOutput, error) {
+	return s.ListObjectVersionsWithContext(context.Background(), input)
+}
+
+// ListObjectVersionsWithContext add context support for ListObjectVersions
+func (s *Bucket) ListObjectVersionsWithContext(ctx context.Context, input *ListObjectVersionsInput) (*ListObjectVersionsOutput, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	r, x, err := s.ListObjectVersionsRequest(input)
+
+	if err != nil {
+		return x, err
+	}
+
+	err = r.SendWithContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
+	x.RequestID = &requestID
+
+	return x, err
+}
+
+// ListObjectVersionsRequest creates request and output object of ListObjectVersions.
+func (s *Bucket) ListObjectVersionsRequest(input *ListObjectVersionsInput) (*request.Request, *ListObjectVersionsOutput, error) {
+
+	if input == nil {
+		input = &ListObjectVersionsInput{}
+	}
+
+	properties := *s.Properties
+
+	o := &data.Operation{
+		Config:        s.Config,
+		Properties:    &properties,
+		APIName:       "List Object Versions",
+		RequestMethod: "GET",
+		RequestURI:    "/<bucket-name>?versions",
+		StatusCodes: []int{
+			200, // OK
+		},
+	}
+
+	x := &ListObjectVersionsOutput{}
+	r, err := request.New(o, input, x)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return r, x, nil
+}
+
+// ListObjectVersionsInput presents input for ListObjectVersions.
+type ListObjectVersionsInput struct {
+	// Put all keys that share a common prefix into a list
+	Delimiter *string `json:"delimiter,omitempty" name:"delimiter" location:"query"`
+	// Limit results to keys that start at this key_marker
+	KeyMarker *string `json:"key_marker,omitempty" name:"key_marker" location:"query"`
+	// Results count limit
+	Limit *int `json:"limit,omitempty" name:"limit" location:"query"`
+	// Limits results to keys that begin with the prefix
+	Prefix *string `json:"prefix,omitempty" name:"prefix" location:"query"`
+	// Specifies the object version you want to start listing from.
+	VersionIDMarker *string `json:"version_id_marker,omitempty" name:"version_id_marker" location:"query"`
+}
+
+// Validate validates the input for ListObjectVersions.
+func (v *ListObjectVersionsInput) Validate() error {
+
+	return nil
+}
+
+// ListObjectVersionsOutput presents output for ListObjectVersions.
+type ListObjectVersionsOutput struct {
+	StatusCode *int `location:"statusCode"`
+
+	RequestID *string `location:"requestID"`
+
+	// Other object keys that share common prefixes
+	CommonPrefixes []*string `json:"common_prefixes,omitempty" name:"common_prefixes" location:"elements"`
+	// Delimiter that specified in request parameters
+	Delimiter *string `json:"delimiter,omitempty" name:"delimiter" location:"elements"`
+	// Indicate if these are more results in the next page
+	HasMore *bool `json:"has_more,omitempty" name:"has_more" location:"elements"`
+	// key_marker that specified in request parameters
+	KeyMarker *string `json:"key_marker,omitempty" name:"key_marker" location:"elements"`
+	// Object keys
+	Keys []*VersionKeyType `json:"keys,omitempty" name:"keys" location:"elements"`
+	// Limit that specified in request parameters
+	Limit *int `json:"limit,omitempty" name:"limit" location:"elements"`
+	// Bucket name
+	Name *string `json:"name,omitempty" name:"name" location:"elements"`
+	// The last key in keys list, use this value for the key_marker request parameter in a subsequent request.
+	NextKeyMarker *string `json:"next_key_marker,omitempty" name:"next_key_marker" location:"elements"`
+	// The last version_id of the last key in keys list, use this value for the version_id_marker request parameter in a subsequent request.
+	NextVersionIDMarker *string `json:"next_version_id_marker,omitempty" name:"next_version_id_marker" location:"elements"`
+	// Bucket owner
+	Owner *OwnerType `json:"owner,omitempty" name:"owner" location:"elements"`
+	// Prefix that specified in request parameters
+	Prefix *string `json:"prefix,omitempty" name:"prefix" location:"elements"`
+	// version_id_marker that specified in request parameters
+	VersionIDMarker *string `json:"version_id_marker,omitempty" name:"version_id_marker" location:"elements"`
 }
 
 // ListObjects does Retrieve the object list in a bucket.
@@ -1818,19 +1993,11 @@ func (s *Bucket) PutACLRequest(input *PutBucketACLInput) (*request.Request, *Put
 // PutBucketACLInput presents input for PutBucketACL.
 type PutBucketACLInput struct {
 	// Bucket ACL rules
-	ACL []*ACLType `json:"acl" name:"acl" location:"elements"` // Required
-
+	ACL []*ACLType `json:"acl,omitempty" name:"acl" location:"elements"`
 }
 
 // Validate validates the input for PutBucketACL.
 func (v *PutBucketACLInput) Validate() error {
-
-	if len(v.ACL) == 0 {
-		return errors.ParameterRequiredError{
-			ParameterName: "ACL",
-			ParentName:    "PutBucketACLInput",
-		}
-	}
 
 	if len(v.ACL) > 0 {
 		for _, property := range v.ACL {
@@ -2596,6 +2763,104 @@ func (v *PutBucketReplicationInput) Validate() error {
 
 // PutBucketReplicationOutput presents output for PutBucketReplication.
 type PutBucketReplicationOutput struct {
+	StatusCode *int `location:"statusCode"`
+
+	RequestID *string `location:"requestID"`
+}
+
+// PutVersioning does Set Versioning information of the bucket.
+// Documentation URL: https://docs.qingcloud.com/qingstor/api/bucket/put_versioning.html
+func (s *Bucket) PutVersioning(input *PutBucketVersioningInput) (*PutBucketVersioningOutput, error) {
+	return s.PutVersioningWithContext(context.Background(), input)
+}
+
+// PutVersioningWithContext add context support for PutVersioning
+func (s *Bucket) PutVersioningWithContext(ctx context.Context, input *PutBucketVersioningInput) (*PutBucketVersioningOutput, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	r, x, err := s.PutVersioningRequest(input)
+
+	if err != nil {
+		return x, err
+	}
+
+	err = r.SendWithContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
+	x.RequestID = &requestID
+
+	return x, err
+}
+
+// PutVersioningRequest creates request and output object of PutBucketVersioning.
+func (s *Bucket) PutVersioningRequest(input *PutBucketVersioningInput) (*request.Request, *PutBucketVersioningOutput, error) {
+
+	if input == nil {
+		input = &PutBucketVersioningInput{}
+	}
+
+	properties := *s.Properties
+
+	o := &data.Operation{
+		Config:        s.Config,
+		Properties:    &properties,
+		APIName:       "PUT Bucket Versioning",
+		RequestMethod: "PUT",
+		RequestURI:    "/<bucket-name>?versioning",
+		StatusCodes: []int{
+			200, // OK
+		},
+	}
+
+	x := &PutBucketVersioningOutput{}
+	r, err := request.New(o, input, x)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return r, x, nil
+}
+
+// PutBucketVersioningInput presents input for PutBucketVersioning.
+type PutBucketVersioningInput struct {
+	// versioning status
+	// Status's available values: DISABLED, ENABLED, SUSPENDED
+	Status *string `json:"status,omitempty" name:"status" location:"elements"`
+}
+
+// Validate validates the input for PutBucketVersioning.
+func (v *PutBucketVersioningInput) Validate() error {
+
+	if v.Status != nil {
+		statusValidValues := []string{"DISABLED", "ENABLED", "SUSPENDED"}
+		statusParameterValue := fmt.Sprint(*v.Status)
+
+		statusIsValid := false
+		for _, value := range statusValidValues {
+			if value == statusParameterValue {
+				statusIsValid = true
+			}
+		}
+
+		if !statusIsValid {
+			return errors.ParameterValueNotAllowedError{
+				ParameterName:  "Status",
+				ParameterValue: statusParameterValue,
+				AllowedValues:  statusValidValues,
+			}
+		}
+	}
+
+	return nil
+}
+
+// PutBucketVersioningOutput presents output for PutBucketVersioning.
+type PutBucketVersioningOutput struct {
 	StatusCode *int `location:"statusCode"`
 
 	RequestID *string `location:"requestID"`
